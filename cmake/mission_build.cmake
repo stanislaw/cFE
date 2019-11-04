@@ -111,6 +111,23 @@ function(prepare)
     add_definitions(-DSIMULATION=${SIMULATION})
   endif (SIMULATION)
 
+  #
+  # If ENABLE_PERMISSIVE=true, this will enable features to make the
+  # OSAL library compatible with a non-root (normal user mode) environment.
+  # In the PC-Linux/Posix build, this means:
+  # - A message queue deeper than the maximum system limit will be silently
+  #   truncatedto the maximum system limit (no error).
+  # - If the user does not have permission to create elevated priority tasks,
+  #   then the tasks will be created at the default priority (no error).
+  #   Note this behavior can also be forced by the
+  #   OSAL_DEBUG_DISABLE_TASK_PRIORITIES macro in the *_osconfig.h
+  #
+  # Default behavior: return errors to the caller for these conditions.
+  #
+  if (ENABLE_PERMISSIVE)
+    add_definitions(-DOSAL_DEBUG_PERMISSIVE_MODE)
+  endif (ENABLE_PERMISSIVE)
+
   # Generate the cfe_mission_cfg.h wrapper file  
   generate_config_includefile("inc/cfe_mission_cfg.h" mission_cfg.h ${MISSIONCONFIG})
   generate_config_includefile("inc/cfe_perfids.h" perfids.h ${MISSIONCONFIG} )

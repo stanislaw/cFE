@@ -190,21 +190,6 @@
 #undef OSAL_EXTRA_DEBUG
 
 /*
- * If OSAL_DEBUG_PERMISSIVE_MODE is defined, this will enable features to make the
- * OSAL library compatible with a non-root (normal user mode) environment.   In the PC-Linux/Posix
- * build, this means:
- *  - A message queue deeper than the maximum system limit will be silently truncated
- *    to the maximum system limit (no error).
- *  - If the user does not have permission to create elevated priority tasks, then the tasks will
- *    be created at the default priority (no error).  Note this behavior can also be forced by the
- *    OSAL_DEBUG_DISABLE_TASK_PRIORITIES macro below.
- *
- * Leaving this undefined will produce the default behavior, which is to return errors to the caller
- * for these conditions.
- */
-#undef OSAL_DEBUG_PERMISSIVE_MODE
-
-/*
  * If OSAL_DEBUG_DISABLE_TASK_PRIORITIES is defined, the "priority" argument
  * supplied to the task creation function will be ignored and all tasks will
  * run at the default scheduling priority.  This is intended for debugging
