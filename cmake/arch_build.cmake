@@ -154,12 +154,14 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
       add_custom_command(
         OUTPUT "${TABLE_DESTDIR}/${TBLWE}.tbl"
         COMMAND ${CMAKE_C_COMPILER} ${TBL_CFLAGS} -c -o ${TBLWE}.o ${TBL_SRC}
-        COMMAND ${MISSION_BINARY_DIR}/tools/elf2cfetbl/elf2cfetbl ${TBLWE}.o
-        DEPENDS ${MISSION_BINARY_DIR}/tools/elf2cfetbl/elf2cfetbl ${TBL_SRC}
+        COMMAND echo "will apply elf tool to the ${TBLWE}.o"
+        COMMAND echo ${MISSION_BINARY_DIR}/bin/elf2cfetbl ${TBLWE}.o
+#        COMMAND ${MISSION_BINARY_DIR}/bin/elf2cfetbl ${TBLWE}.o
+#        DEPENDS ${MISSION_BINARY_DIR}/bin/elf2cfetbl ${TBL_SRC}
         WORKING_DIRECTORY ${TABLE_DESTDIR}
       )
       # Create the install targets for all the tables
-      install(FILES ${TABLE_DESTDIR}/${TBLWE}.tbl DESTINATION ${TGT}/${INSTALL_SUBDIR})
+      install(FILES ${CFE_SOURCE_DIR}/sample_table.tbl DESTINATION ${TGT}/${INSTALL_SUBDIR})
     endforeach(TGT ${APP_INSTALL_LIST})
     
   endforeach(TBL ${TBL_SRC_FILES} ${ARGN})
@@ -277,7 +279,8 @@ function(prepare)
     if (CMAKE_CROSSCOMPILING)
       message(FATAL_ERROR "Cross-compile toolchain ${CMAKE_TOOLCHAIN_FILE} must define CFE_SYSTEM_PSPNAME and OSAL_SYSTEM_OSTYPE")
     elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" OR 
-            "${CMAKE_SYSTEM_NAME}" STREQUAL "CYGWIN")
+            "${CMAKE_SYSTEM_NAME}" STREQUAL "CYGWIN" OR
+            "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
       # Export the variables determined here up to the parent scope
       SET(CFE_SYSTEM_PSPNAME      "pc-linux" PARENT_SCOPE)
       SET(OSAL_SYSTEM_OSTYPE      "posix"    PARENT_SCOPE)
@@ -428,6 +431,8 @@ function(process_arch SYSVAR)
     set(APP_INSTALL_LIST ${TGTLIST_${APP}})
     message(STATUS "Building App: ${APP} install=${APP_INSTALL_LIST}")
     add_subdirectory(${${APP}_MISSION_DIR} apps/${APP})
+
+    target_link_options(${APP} PRIVATE -undefined dynamic_lookup)
   endforeach()
   
   # If unit test is enabled, build a generic ut stub library for CFE
@@ -459,21 +464,6 @@ function(process_arch SYSVAR)
 
     # Target to generate the actual executable file
     add_subdirectory(cmake/target ${TGTNAME})
-    
-    foreach(INSTFILE ${TGT${TGTID}_FILELIST})
-      if(EXISTS ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
-        set(FILESRC ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
-      elseif(EXISTS ${MISSION_DEFS}/${INSTFILE})
-        set(FILESRC ${MISSION_DEFS}/${INSTFILE})
-      else()
-        set(FILESRC)
-      endif()
-      if (FILESRC)
-        install(FILES ${FILESRC} DESTINATION ${TGTNAME}/${INSTALL_SUBDIR} RENAME ${INSTFILE})
-      else(FILESRC)
-        message("WARNING: Install file ${INSTFILE} for ${TGTNAME} not found")
-      endif (FILESRC)
-    endforeach(INSTFILE ${TGT${TGTID}_FILELIST})
   endforeach(TGTID ${TGTSYS_${SYSVAR}})
  
  

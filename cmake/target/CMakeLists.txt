@@ -60,6 +60,12 @@ endif()
 # Target for the final executable
 add_executable(core-${TGTNAME} src/target_config.c)
 
+# Error loading shared library: dlopen(/sandbox/cFS/runtime/./cf/sample_app.so, 10): Symbol not found: _CFE_TBL_GetAddress
+# Referenced from: /sandbox/cFS/runtime/./cf/sample_app.so
+# Expected in: flat namespace
+# in /sandbox/cFS/runtime/./cf/sample_app.so
+target_link_options(core-${TGTNAME} PRIVATE -all_load)
+
 # This next section provides a method for adding the "-u" switch to the 
 # linker in order to make sure the linker includes certain symbols in the link.
 # This problem may exist for the entry point or other symbols if the 
@@ -78,8 +84,12 @@ set_target_properties(core-${TGTNAME} PROPERTIES LINK_FLAGS "${TARGET_LINK_FLAGS
 # linking the entire CFE system into a single binary then no special help is needed.
 if (TGT${TGTID}_APPLIST)
 
-  set_target_properties(core-${TGTNAME} PROPERTIES ENABLE_EXPORTS TRUE)
-  
+  # [ 98%] Linking C executable core-cpu1
+  # cd /sandbox/cFS/build/cpu1/cpu1 && /usr/local/Cellar/cmake/3.13.2/bin/cmake -E cmake_link_script CMakeFiles/core-cpu1.dir/link.txt --verbose=1
+  # /usr/bin/gcc -Wall     -D_XOPEN_SOURCE=600    -g  -Wl,--export-dynamic CMakeFiles/core-cpu1.dir/src/target_config.c.o  -o core-cpu1 ../cfe_core_default_cpu1/libcfe_core_default_cpu1.a ../psp/pc-linux/libpsp-pc-linux.a ../osal/libosal.a -lpthread -ldl ../osal/posix-mac-addons/src/mqueue/libmqueue.a ../osal/posix-mac-addons/src/stubs/librt.a ../osal/posix-mac-addons/src/pthread/libposix-mac-pthread.a ../osal/posix-mac-addons/src/semaphore/libposix-mac-semaphore.a ../osal/posix-mac-addons/src/stubs/libposix-mac-stubs.a ../osal/posix-mac-addons/src/time/libposix-mac-time.a ../osal/posix-mac-addons/src/timer/libposix-mac-timer.a
+  # ld: unknown option: --export-dynamic
+  # set_target_properties(core-${TGTNAME} PROPERTIES ENABLE_EXPORTS TRUE)
+
   if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     # The option pair for GNU gcc/ld tools
     set(START_WHOLE_ARCHIVE "--whole-archive")
@@ -203,3 +213,35 @@ target_link_libraries(core-${TGTNAME}
 # it may be overridden in an OS-specific manner if necessary.
 cfe_exec_do_install(${TGTNAME})
 
+foreach(INSTFILE ${TGT${TGTID}_FILELIST})
+  if(EXISTS ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
+    set(FILESRC ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
+  elseif(EXISTS ${MISSION_DEFS}/${INSTFILE})
+    set(FILESRC ${MISSION_DEFS}/${INSTFILE})
+  else()
+    set(FILESRC)
+  endif()
+  if (FILESRC)
+    add_custom_command(
+      TARGET core-${TGTNAME} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+      ${FILESRC}
+      $<TARGET_FILE_DIR:core-${TGTNAME}>/${INSTALL_SUBDIR}/${INSTFILE}
+    )
+
+    install(FILES ${FILESRC} DESTINATION ${TGTNAME}/${INSTALL_SUBDIR} RENAME ${INSTFILE})
+  else(FILESRC)
+    message("WARNING: Install file ${INSTFILE} for ${TGTNAME} not found")
+  endif (FILESRC)
+endforeach(INSTFILE ${TGT${TGTID}_FILELIST})
+
+foreach(APP ${TGTSYS_${SYSVAR}_APPS})
+  set(APP_INSTALL_LIST ${TGTLIST_${APP}})
+  message(STATUS "!!! Copying App: ${APP} install=${APP_INSTALL_LIST}")
+  add_custom_command(
+    TARGET core-${TGTNAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    $<TARGET_FILE:${APP}>
+    $<TARGET_FILE_DIR:core-${TGTNAME}>/${INSTALL_SUBDIR}
+  )
+endforeach()

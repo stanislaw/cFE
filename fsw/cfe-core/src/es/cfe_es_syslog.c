@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <assert.h>
 
 
 
@@ -183,6 +184,7 @@ int32 CFE_ES_SysLogAppend_Unsync(const char *LogString)
      * Keeping them in local stack variables allows more efficient modification,
      * since CFE_ES_ResetDataPtr may point directly into a slower NVRAM space.
      */
+    assert(CFE_ES_ResetDataPtr != 0);
     WriteIdx = CFE_ES_ResetDataPtr->SystemLogWriteIdx;
     EndIdx = CFE_ES_ResetDataPtr->SystemLogEndIdx;
 
