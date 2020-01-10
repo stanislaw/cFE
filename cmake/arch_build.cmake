@@ -154,8 +154,8 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
       add_custom_command(
         OUTPUT "${TABLE_DESTDIR}/${TBLWE}.tbl"
         COMMAND ${CMAKE_C_COMPILER} ${TBL_CFLAGS} -c -o ${TBLWE}.o ${TBL_SRC}
-        COMMAND ${MISSION_BINARY_DIR}/tools/elf2cfetbl/elf2cfetbl ${TBLWE}.o
-        DEPENDS ${MISSION_BINARY_DIR}/tools/elf2cfetbl/elf2cfetbl ${TBL_SRC}
+        COMMAND ${MISSION_BINARY_DIR}/bin/elf2cfetbl ${TBLWE}.o
+        DEPENDS ${MISSION_BINARY_DIR}/bin/elf2cfetbl ${TBL_SRC}
         WORKING_DIRECTORY ${TABLE_DESTDIR}
       )
       # Create the install targets for all the tables
