@@ -40,6 +40,8 @@ function(initialize_globals)
       set(MISSION_SOURCE_DIR ${MISSION_SOURCE_DIR} CACHE PATH "Top level mission source directory")
     endif(NOT DEFINED MISSION_SOURCE_DIR)
 
+    set(CFE_SOURCE_DIR "${MISSION_SOURCE_DIR}/cfe" CACHE PATH "CFE source directory")
+
     # The configuration should be in a subdirectory named "<mission>_defs".  If there is one
     # and only one of these, this is assumed to be it.  If there is more than one then the
     # user MUST specify which one is intended to be used by setting MISSIONCONFIG in the environment
@@ -210,11 +212,11 @@ function(prepare)
   # In all cases it is assumed to include the CFE documentation as well (could be configurable?)  
   file(WRITE "${CMAKE_BINARY_DIR}/doc/mission-content.doxyfile"
       ${MISSION_DOXYFILE_USER_CONTENT})
-      
-  configure_file("${CMAKE_SOURCE_DIR}/cmake/cfe-common.doxyfile.in"
+
+  configure_file("${CFE_SOURCE_DIR}/cmake/cfe-common.doxyfile.in"
     "${CMAKE_BINARY_DIR}/doc/cfe-common.doxyfile")
     
-  configure_file("${CMAKE_SOURCE_DIR}/cmake/mission-detaildesign.doxyfile.in"
+  configure_file("${CFE_SOURCE_DIR}/cmake/mission-detaildesign.doxyfile.in"
     "${CMAKE_BINARY_DIR}/doc/mission-detaildesign.doxyfile")
     
   # The user guide should include the doxygen from the _public_ API files from CFE + OSAL
@@ -223,7 +225,7 @@ function(prepare)
     "${osal_MISSION_DIR}/src/os/inc/*.h"
     "${MISSION_SOURCE_DIR}/psp/fsw/inc/*.h")
   string(REPLACE ";" " \\\n" MISSION_USERGUIDE_HEADERFILES "${MISSION_USERGUIDE_HEADERFILES}")  
-  configure_file("${CMAKE_SOURCE_DIR}/cmake/cfe-usersguide.doxyfile.in"
+  configure_file("${CFE_SOURCE_DIR}/cmake/cfe-usersguide.doxyfile.in"
     "${CMAKE_BINARY_DIR}/doc/cfe-usersguide.doxyfile")
     
   add_custom_target(mission-doc 
