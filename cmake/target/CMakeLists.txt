@@ -12,6 +12,8 @@
 
 project(CFETARGET C)
 
+#add_compile_options(-fPIC)
+
 # The CFE core target to link to MUST be given 
 if (NOT CFE_CORE_TARGET)
   message(FATAL_ERROR "CFE_CORE_TARGET must be defined to link a final exe")
@@ -57,6 +59,8 @@ if (DEFINED TGTNAME)
   add_definitions(-DCFE_CPU_NAME_VALUE="${TGTNAME}")
 endif()
 
+add_library(target-config-WIP src/target_config.c)
+
 # Target for the final executable
 add_executable(core-${TGTNAME} src/target_config.c)
 
@@ -78,8 +82,8 @@ set_target_properties(core-${TGTNAME} PROPERTIES LINK_FLAGS "${TARGET_LINK_FLAGS
 # linking the entire CFE system into a single binary then no special help is needed.
 if (TGT${TGTID}_APPLIST)
 
-  set_target_properties(core-${TGTNAME} PROPERTIES ENABLE_EXPORTS TRUE)
-  
+#  set_target_properties(core-${TGTNAME} PROPERTIES ENABLE_EXPORTS TRUE)
+
   if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     # The option pair for GNU gcc/ld tools
     set(START_WHOLE_ARCHIVE "--whole-archive")
@@ -203,3 +207,35 @@ target_link_libraries(core-${TGTNAME}
 # it may be overridden in an OS-specific manner if necessary.
 cfe_exec_do_install(${TGTNAME})
 
+foreach(INSTFILE ${TGT${TGTID}_FILELIST})
+  if(EXISTS ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
+    set(FILESRC ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
+  elseif(EXISTS ${MISSION_DEFS}/${INSTFILE})
+    set(FILESRC ${MISSION_DEFS}/${INSTFILE})
+  else()
+    set(FILESRC)
+  endif()
+  if (FILESRC)
+    add_custom_command(
+      TARGET core-${TGTNAME} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+      ${FILESRC}
+      $<TARGET_FILE_DIR:core-${TGTNAME}>/${INSTALL_SUBDIR}/${INSTFILE}
+    )
+
+    install(FILES ${FILESRC} DESTINATION ${TGTNAME}/${INSTALL_SUBDIR} RENAME ${INSTFILE})
+  else(FILESRC)
+    message("WARNING: Install file ${INSTFILE} for ${TGTNAME} not found")
+  endif (FILESRC)
+endforeach(INSTFILE ${TGT${TGTID}_FILELIST})
+
+foreach(APP ${TGTSYS_${SYSVAR}_APPS})
+  set(APP_INSTALL_LIST ${TGTLIST_${APP}})
+  message(STATUS "!!! Copying App: ${APP} install=${APP_INSTALL_LIST}")
+  add_custom_command(
+    TARGET core-${TGTNAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    $<TARGET_FILE:${APP}>
+    $<TARGET_FILE_DIR:core-${TGTNAME}>/${INSTALL_SUBDIR}
+  )
+endforeach()

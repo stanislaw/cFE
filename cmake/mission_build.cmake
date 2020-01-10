@@ -341,11 +341,12 @@ function(process_arch TARGETSYSTEM)
     # Do not supply any toolchain file option to the subprocess
     set(SELECTED_TOOLCHAIN_FILE)
   endif ()
-  
+
   # Execute CMake subprocess to create a binary build tree for the specific CPU architecture
   execute_process(
     COMMAND ${CMAKE_COMMAND}
         -G "Unix Makefiles"
+        -DCMAKE_VERBOSE_MAKEFILE=ON
         -DTARGETSYSTEM=${TARGETSYSTEM}
         -DMISSION_BINARY_DIR=${MISSION_BINARY_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}

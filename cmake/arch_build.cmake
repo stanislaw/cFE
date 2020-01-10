@@ -26,6 +26,7 @@
 #
 function(initialize_globals)
 
+  message("--- ${MISSION_BINARY_DIR}")
   # Sanity check -- the parent build script should have set MISSION_BINARY_DIR
   if (NOT IS_DIRECTORY "${MISSION_BINARY_DIR}")
       message(FATAL_ERROR "BUG -- MISSION_BINARY_DIR not a valid directory in arch_build.cmake")
@@ -154,12 +155,14 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
       add_custom_command(
         OUTPUT "${TABLE_DESTDIR}/${TBLWE}.tbl"
         COMMAND ${CMAKE_C_COMPILER} ${TBL_CFLAGS} -c -o ${TBLWE}.o ${TBL_SRC}
-        COMMAND ${MISSION_BINARY_DIR}/tools/elf2cfetbl/elf2cfetbl ${TBLWE}.o
-        DEPENDS ${MISSION_BINARY_DIR}/tools/elf2cfetbl/elf2cfetbl ${TBL_SRC}
+        COMMAND echo "will apply elf tool to the ${TBLWE}.o"
+        COMMAND echo ${MISSION_BINARY_DIR}/bin/elf2cfetbl ${TBLWE}.o
+#        COMMAND ${MISSION_BINARY_DIR}/bin/elf2cfetbl ${TBLWE}.o
+#        DEPENDS ${MISSION_BINARY_DIR}/bin/elf2cfetbl ${TBL_SRC}
         WORKING_DIRECTORY ${TABLE_DESTDIR}
       )
       # Create the install targets for all the tables
-      install(FILES ${TABLE_DESTDIR}/${TBLWE}.tbl DESTINATION ${TGT}/${INSTALL_SUBDIR})
+      install(FILES /sandbox/sample_table.tbl DESTINATION ${TGT}/${INSTALL_SUBDIR})
     endforeach(TGT ${APP_INSTALL_LIST})
     
   endforeach(TBL ${TBL_SRC_FILES} ${ARGN})
@@ -277,7 +280,8 @@ function(prepare)
     if (CMAKE_CROSSCOMPILING)
       message(FATAL_ERROR "Cross-compile toolchain ${CMAKE_TOOLCHAIN_FILE} must define CFE_SYSTEM_PSPNAME and OSAL_SYSTEM_OSTYPE")
     elseif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" OR 
-            "${CMAKE_SYSTEM_NAME}" STREQUAL "CYGWIN")
+            "${CMAKE_SYSTEM_NAME}" STREQUAL "CYGWIN" OR
+            "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
       # Export the variables determined here up to the parent scope
       SET(CFE_SYSTEM_PSPNAME      "pc-linux" PARENT_SCOPE)
       SET(OSAL_SYSTEM_OSTYPE      "posix"    PARENT_SCOPE)
@@ -422,12 +426,20 @@ function(process_arch SYSVAR)
     endforeach(APP ${TGT${TGTID}_APPLIST})
       
   endforeach(TGTID ${TGTSYS_${SYSVAR}})
-  
+
+#  add_compile_options(-fPIC -fsanitize=undefined)
+#  add_link_options(-fPIC -fsanitize=undefined)
+
+  cmake_policy(SET CMP0079 NEW)
   # Process each app that is used on this system architecture
   foreach(APP ${TGTSYS_${SYSVAR}_APPS})
     set(APP_INSTALL_LIST ${TGTLIST_${APP}})
     message(STATUS "Building App: ${APP} install=${APP_INSTALL_LIST}")
     add_subdirectory(${${APP}_MISSION_DIR} apps/${APP})
+
+    set_target_properties(${APP} PROPERTIES NO_SONAME TRUE)
+    target_link_libraries(${APP} cfe_core_default_cpu1 osal psp-pc-linux target-config-WIP)
+    target_link_options(${APP} PRIVATE -all_load)
   endforeach()
   
   # If unit test is enabled, build a generic ut stub library for CFE
@@ -459,21 +471,6 @@ function(process_arch SYSVAR)
 
     # Target to generate the actual executable file
     add_subdirectory(cmake/target ${TGTNAME})
-    
-    foreach(INSTFILE ${TGT${TGTID}_FILELIST})
-      if(EXISTS ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
-        set(FILESRC ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
-      elseif(EXISTS ${MISSION_DEFS}/${INSTFILE})
-        set(FILESRC ${MISSION_DEFS}/${INSTFILE})
-      else()
-        set(FILESRC)
-      endif()
-      if (FILESRC)
-        install(FILES ${FILESRC} DESTINATION ${TGTNAME}/${INSTALL_SUBDIR} RENAME ${INSTFILE})
-      else(FILESRC)
-        message("WARNING: Install file ${INSTFILE} for ${TGTNAME} not found")
-      endif (FILESRC)
-    endforeach(INSTFILE ${TGT${TGTID}_FILELIST})
   endforeach(TGTID ${TGTSYS_${SYSVAR}})
  
  

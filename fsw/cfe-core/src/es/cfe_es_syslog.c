@@ -61,7 +61,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <assert.h>
+#include <execinfo.h>
 
+#include <unistd.h>
 
 
 
@@ -140,8 +143,30 @@ void CFE_ES_SysLogReadStart_Unsync(CFE_ES_SysLogReadBuffer_t *Buffer)
  * Append a preformatted string to the syslog
  * -----------------------------------------------------------------
  */
+/* Obtain a backtrace and print it to stdout. */
+
+
+void print_trace (void) {
+  void *array[10];
+  size_t size;
+  char **strings;
+  size_t i;
+
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+
+  printf ("Obtained %zd stack frames.\n", size);
+
+  for (i = 0; i < size; i++)
+    printf ("%s\n", strings[i]);
+
+  free (strings);
+}
+
 int32 CFE_ES_SysLogAppend_Unsync(const char *LogString)
 {
+    printf("CFE_ES_SysLogAppend_Unsync\n");
+    /// print_trace();
     int32 ReturnCode;
     size_t MessageLen;
     size_t WriteIdx;
@@ -183,9 +208,39 @@ int32 CFE_ES_SysLogAppend_Unsync(const char *LogString)
      * Keeping them in local stack variables allows more efficient modification,
      * since CFE_ES_ResetDataPtr may point directly into a slower NVRAM space.
      */
+
+    printf("WIP\n");
+
+    printf("accessing1: CFE_ES_ResetDataPtr: %p\n", CFE_ES_ResetDataPtr);
+
+    printf("POINTER to a variable %p\n", &CFE_ES_ResetDataPtr);
+
+    if (CFE_ES_ResetDataPtr == 0) {
+      printf("this should be the app cstack\n");
+    }
+
+    assert(CFE_ES_ResetDataPtr != 0);
+
+    int idx = CFE_ES_ResetDataPtr->SystemLogWriteIdx;
+
+  printf("PID: %d\n", getpid());
+
+    printf("accessing2: CFE_ES_ResetDataPtr->SystemLogWriteIdx %p %d %s:%d\n",
+      CFE_ES_ResetDataPtr,
+      idx,
+      __FILE__, __LINE__
+    );
+
+   assert(CFE_ES_ResetDataPtr != NULL);
+    assert(CFE_ES_ResetDataPtr->SystemLogWriteIdx != 1235);
+
+    CFE_ES_ResetDataPtr->SystemLogWriteIdx;
+    CFE_ES_ResetDataPtr->SystemLogWriteIdx;
+
     WriteIdx = CFE_ES_ResetDataPtr->SystemLogWriteIdx;
     EndIdx = CFE_ES_ResetDataPtr->SystemLogEndIdx;
 
+    return CFE_SUCCESS;
     /*
      * Check if the log message plus will fit between
      * the HeadIdx and the end of the buffer.

@@ -59,6 +59,7 @@ project(CFETOP C)
 # Allow unit tests to be added by any recipe
 enable_testing()
 
+add_compile_options(-g)
 # Include the global routines
 include("cmake/global_functions.cmake")
 

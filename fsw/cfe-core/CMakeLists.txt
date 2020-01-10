@@ -16,6 +16,8 @@
 cmake_minimum_required(VERSION 2.6.4)
 project(CFECORE C)
 
+add_compile_options(-fno-common)
+
 # The CFE core target to generate MUST be given
 # this allows more than one cfe core target per architecture 
 if (NOT CFE_CORE_TARGET)
@@ -36,6 +38,7 @@ foreach(MODULE ${CFE_CORE_MODULES} config shared)
 endforeach(MODULE ${CFE_CORE_MODULES})
 
 add_library(${CFE_CORE_TARGET} STATIC ${CFE_ALL_MODULE_SRCS})
+#message(FATAL_ERROR "${CFE_CORE_TARGET}")
 
 if (ENABLE_UNIT_TESTS)
   add_subdirectory(unit-test)

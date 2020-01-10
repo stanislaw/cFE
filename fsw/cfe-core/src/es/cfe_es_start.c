@@ -47,6 +47,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 static int32 CFE_ES_MainTaskSyncDelay(uint32 AppMinState, uint32 TimeOutMilliseconds);
 
@@ -70,7 +71,7 @@ CFE_ES_Global_t     CFE_ES_Global;
 /*
 ** Pointer to the Reset data that is preserved on a processor reset
 */
-CFE_ES_ResetData_t  *CFE_ES_ResetDataPtr;
+CFE_ES_ResetData_t  *CFE_ES_ResetDataPtr = NULL;
 
 
 /***************************************************************************/
@@ -310,7 +311,10 @@ void CFE_ES_SetupResetVariables(uint32 StartType, uint32 StartSubtype, uint32 Bo
       return;
    }
 
+   printf("CFE_ES_ResetDataPtr = (CFE_ES_ResetData_t *)ResetDataAddr;\n");
    CFE_ES_ResetDataPtr = (CFE_ES_ResetData_t *)ResetDataAddr;
+
+   assert(CFE_ES_ResetDataPtr->SystemLogWriteIdx != 1234);
 
    /*
    ** Record the BootSource (bank) so it will be valid in the ER log entries.
