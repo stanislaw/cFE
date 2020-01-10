@@ -46,11 +46,6 @@
 # Squelch a warning when building on Win32/Cygwin
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
-# Add a path for any locally-supplied CMake modules
-# These would typically be a part of any custom PSPs in use.
-# (this is not required, and the directory can be empty/nonexistent)
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../psp/cmake/Modules" ${CMAKE_MODULE_PATH})
-
 # The minimum CMake version is chosen because 2.6.4 is what is
 # included by default with RHEL/Centos 5.x
 cmake_minimum_required(VERSION 2.6.4)
@@ -83,6 +78,11 @@ endif (TARGETSYSTEM)
 # This is implemented differently depending on whether this is a 
 # top-level or arch-specific build
 initialize_globals()
+
+# Add a path for any locally-supplied CMake modules
+# These would typically be a part of any custom PSPs in use.
+# (this is not required, and the directory can be empty/nonexistent)
+set(CMAKE_MODULE_PATH "${CFE_SOURCE_DIR}/../psp/cmake/Modules" ${CMAKE_MODULE_PATH})
 
 # Load the target configuration information (used by all builds)
 # This is at the top level so all vars set in here will become globals.

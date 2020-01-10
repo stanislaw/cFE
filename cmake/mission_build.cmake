@@ -40,6 +40,10 @@ function(initialize_globals)
       set(MISSION_SOURCE_DIR ${MISSION_SOURCE_DIR} CACHE PATH "Top level mission source directory")
     endif(NOT DEFINED MISSION_SOURCE_DIR)
 
+    if (NOT DEFINED CFE_SOURCE_DIR)
+      set(CFE_SOURCE_DIR "${MISSION_SOURCE_DIR}/cfe" CACHE PATH "CFE source directory")
+    endif()
+
     # The configuration should be in a subdirectory named "<mission>_defs".  If there is one
     # and only one of these, this is assumed to be it.  If there is more than one then the
     # user MUST specify which one is intended to be used by setting MISSIONCONFIG in the environment
@@ -210,11 +214,11 @@ function(prepare)
   # In all cases it is assumed to include the CFE documentation as well (could be configurable?)  
   file(WRITE "${CMAKE_BINARY_DIR}/doc/mission-content.doxyfile"
       ${MISSION_DOXYFILE_USER_CONTENT})
-      
-  configure_file("${CMAKE_SOURCE_DIR}/cmake/cfe-common.doxyfile.in"
+
+  configure_file("${CFE_SOURCE_DIR}/cmake/cfe-common.doxyfile.in"
     "${CMAKE_BINARY_DIR}/doc/cfe-common.doxyfile")
     
-  configure_file("${CMAKE_SOURCE_DIR}/cmake/mission-detaildesign.doxyfile.in"
+  configure_file("${CFE_SOURCE_DIR}/cmake/mission-detaildesign.doxyfile.in"
     "${CMAKE_BINARY_DIR}/doc/mission-detaildesign.doxyfile")
     
   # The user guide should include the doxygen from the _public_ API files from CFE + OSAL
@@ -236,7 +240,7 @@ function(prepare)
   set(USERGUIDE_PREDEFINED 
       "MESSAGE_FORMAT_IS_CCSDS")
  
-  configure_file("${CMAKE_SOURCE_DIR}/cmake/cfe-usersguide.doxyfile.in"
+  configure_file("${CFE_SOURCE_DIR}/cmake/cfe-usersguide.doxyfile.in"
     "${CMAKE_BINARY_DIR}/doc/cfe-usersguide.doxyfile")
     
   add_custom_target(mission-doc 
@@ -284,7 +288,7 @@ function(prepare)
   add_custom_target(mission-version
     COMMAND 
         ${CMAKE_COMMAND} -D BIN=${CMAKE_BINARY_DIR}
-                         -P ${CMAKE_SOURCE_DIR}/cmake/version.cmake
+                         -P ${CFE_SOURCE_DIR}/cmake/version.cmake
     WORKING_DIRECTORY 
       ${CMAKE_SOURCE_DIR}                             
   )
@@ -327,8 +331,8 @@ function(process_arch TARGETSYSTEM)
     # Find the toolchain file - allow a file in the mission defs dir to supercede one in the compile dir
     if (EXISTS ${MISSION_DEFS}/toolchain-${CURRSYS}.cmake)
       set(TOOLCHAIN_FILE ${MISSION_DEFS}/toolchain-${CURRSYS}.cmake)
-    elseif(EXISTS ${CMAKE_SOURCE_DIR}/cmake/toolchain-${CURRSYS}.cmake)
-      set(TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cmake/toolchain-${CURRSYS}.cmake)
+    elseif(EXISTS ${CFE_SOURCE_DIR}/cmake/toolchain-${CURRSYS}.cmake)
+      set(TOOLCHAIN_FILE ${CFE_SOURCE_DIR}/cmake/toolchain-${CURRSYS}.cmake)
     else()
       message(FATAL_ERROR "Unable to find toolchain file for ${CURRSYS}")
     endif()
@@ -347,7 +351,7 @@ function(process_arch TARGETSYSTEM)
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         ${SELECTED_TOOLCHAIN_FILE}
-        ${CMAKE_SOURCE_DIR} 
+        ${CFE_SOURCE_DIR}
     WORKING_DIRECTORY 
         "${ARCH_BINARY_DIR}" 
     RESULT_VARIABLE 
