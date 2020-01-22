@@ -203,3 +203,34 @@ target_link_libraries(core-${TGTNAME}
 # it may be overridden in an OS-specific manner if necessary.
 cfe_exec_do_install(${TGTNAME})
 
+foreach(INSTFILE ${TGT${TGTID}_FILELIST})
+  if(EXISTS ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
+    set(FILESRC ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
+  elseif(EXISTS ${MISSION_DEFS}/${INSTFILE})
+    set(FILESRC ${MISSION_DEFS}/${INSTFILE})
+  else()
+    set(FILESRC)
+  endif()
+  if (FILESRC)
+    add_custom_command(
+      TARGET core-${TGTNAME} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+      ${FILESRC}
+      $<TARGET_FILE_DIR:core-${TGTNAME}>/${INSTALL_SUBDIR}/${INSTFILE}
+    )
+
+    install(FILES ${FILESRC} DESTINATION ${TGTNAME}/${INSTALL_SUBDIR} RENAME ${INSTFILE})
+  else(FILESRC)
+    message("WARNING: Install file ${INSTFILE} for ${TGTNAME} not found")
+  endif (FILESRC)
+endforeach(INSTFILE ${TGT${TGTID}_FILELIST})
+
+foreach(APP ${TGTSYS_${SYSVAR}_APPS})
+  set(APP_INSTALL_LIST ${TGTLIST_${APP}})
+  add_custom_command(
+    TARGET core-${TGTNAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    $<TARGET_FILE:${APP}>
+    $<TARGET_FILE_DIR:core-${TGTNAME}>/${INSTALL_SUBDIR}
+  )
+endforeach()

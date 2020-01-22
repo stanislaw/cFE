@@ -460,21 +460,6 @@ function(process_arch SYSVAR)
 
     # Target to generate the actual executable file
     add_subdirectory(cmake/target ${TGTNAME})
-    
-    foreach(INSTFILE ${TGT${TGTID}_FILELIST})
-      if(EXISTS ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
-        set(FILESRC ${MISSION_DEFS}/${TGTNAME}_${INSTFILE})
-      elseif(EXISTS ${MISSION_DEFS}/${INSTFILE})
-        set(FILESRC ${MISSION_DEFS}/${INSTFILE})
-      else()
-        set(FILESRC)
-      endif()
-      if (FILESRC)
-        install(FILES ${FILESRC} DESTINATION ${TGTNAME}/${INSTALL_SUBDIR} RENAME ${INSTFILE})
-      else(FILESRC)
-        message("WARNING: Install file ${INSTFILE} for ${TGTNAME} not found")
-      endif (FILESRC)
-    endforeach(INSTFILE ${TGT${TGTID}_FILELIST})
   endforeach(TGTID ${TGTSYS_${SYSVAR}})
  
  
